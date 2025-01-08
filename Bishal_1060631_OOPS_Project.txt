@@ -1,0 +1,305 @@
+#include <iostream>
+#include <string>
+#include <thread>
+#include <chrono>
+
+using namespace std;
+
+// Base Class: Vehicle
+class Vehicle {
+protected:
+    string name;
+    int speed;
+    int fuelLevel;
+    int loadCapacity;
+    int fuelConsumptionRate;
+
+public:
+    Vehicle(string vehicleName, int capacity, int fuelRate)
+        : name(vehicleName), speed(0), fuelLevel(100), loadCapacity(capacity), fuelConsumptionRate(fuelRate) {}
+
+    virtual void move(string direction) {
+        if (fuelLevel <= 0) {
+            cout << name << " cannot move. Refuel the vehicle." << endl;
+            return;
+        }
+        fuelLevel -= 5;
+        cout << name << " is moving " << direction << " at speed " << speed << " km/h." << endl;
+        displayVR("Vehicle is moving " + direction);
+    }
+
+    void refuel() {
+        fuelLevel = 100;
+        cout << name << " has been refueled." << endl;
+        displayVR("Refueling vehicle...");
+    }
+
+    void transportMaterial(int weight) {
+        if (weight > loadCapacity) {
+            cout << name << " cannot transport " << weight << " tons. Max capacity: " << loadCapacity << " tons." << endl;
+            return; // No fuel deduction if capacity is exceeded
+        } else if (fuelLevel <= 0) {
+            cout << name << " cannot transport material. Refuel the vehicle." << endl;
+            return;
+        } else {
+            fuelLevel -= 10;
+            cout << name << " is transporting " << weight << " tons of material." << endl;
+            displayVR("Transporting " + to_string(weight) + " tons of material");
+        }
+    }
+
+    virtual void performTask() = 0;
+
+    string getName() const { return name; }
+
+    void setSpeed(int newSpeed) {
+        speed = newSpeed;
+        cout << name << " speed set to " << speed << " km/h." << endl;
+        displayVR("Vehicle speed adjusted to " + to_string(speed) + " km/h");
+    }
+
+    int getFuelLevel() const { return fuelLevel; }
+
+    int getFuelConsumptionRate() const { return fuelConsumptionRate; }
+
+    int getLoadCapacity() const { return loadCapacity; }
+
+protected:  // Changed this to protected
+    void displayVR(string action) {
+        cout << "\n--- VR Simulation ---\n";
+        cout << "Action: " << action << endl;
+        this_thread::sleep_for(chrono::seconds(2)); // Simulate some delay for VR effect
+    }
+};
+
+// Derived Class: Bulldozer
+class Bulldozer : public Vehicle {
+public:
+    Bulldozer(string vehicleName) : Vehicle(vehicleName, 10, 8) {}
+
+    void lift() {
+        if (fuelLevel <= 0) {
+            cout << name << " cannot perform lifting. Refuel the vehicle." << endl;
+            return;
+        }
+        fuelLevel -= fuelConsumptionRate;
+        cout << name << " is lifting debris." << endl;
+        displayVR("Lifting debris...");
+    }
+
+    void performTask() override {
+        lift();
+    }
+};
+
+// Derived Class: Excavator
+class Excavator : public Vehicle {
+public:
+    Excavator(string vehicleName) : Vehicle(vehicleName, 8, 6) {}
+
+    void dig() {
+        if (fuelLevel <= 0) {
+            cout << name << " cannot perform digging. Refuel the vehicle." << endl;
+            return;
+        }
+        fuelLevel -= fuelConsumptionRate;
+        cout << name << " is digging soil." << endl;
+        displayVR("Digging soil...");
+    }
+
+    void performTask() override {
+        dig();
+    }
+};
+
+// Simulation Environment with Dummy VR/AR Integration
+class SimulationEnvironment {
+private:
+    Vehicle* vehicle;
+    string environmentType;
+    int tasksCompleted;
+    int fuelUsed;
+    int score;
+
+public:
+    SimulationEnvironment(Vehicle* v, string env)
+        : vehicle(v), environmentType(env), tasksCompleted(0), fuelUsed(0), score(0) {}
+
+    void provideFeedback() {
+        cout << "\n--- Simulation Feedback ---\n";
+        cout << "Environment: " << environmentType << endl;
+        cout << "Vehicle: " << vehicle->getName() << endl;
+        cout << "Tasks Completed: " << tasksCompleted << endl;
+        cout << "Fuel Used: " << fuelUsed << " units\n";
+        cout << "Final Score: " << score << " points\n";
+        cout << "Fuel Left: " << vehicle->getFuelLevel() << " units\n";  // Display fuel left
+
+        if (score >= 50) {
+            cout << "Performance: Excellent! You have achieved a high score.\n";
+        } else if (score >= 30) {
+            cout << "Performance: Good. Try to be more efficient to score higher.\n";
+        } else {
+            cout << "Performance: Needs Improvement. Focus on completing tasks and managing fuel usage.\n";
+        }
+    }
+
+    void updateScore(int points) {
+        score += points;
+    }
+
+    void incrementTasks() {
+        tasksCompleted++;
+    }
+
+    void addFuelUsage(int amount) {
+        fuelUsed += amount;
+    }
+
+    Vehicle* getVehicle() const {
+        return vehicle;
+    }
+
+    void displayEnvironmentVR() {
+        cout << "\n--- VR Simulation: " << environmentType << " ---\n";
+        if (environmentType == "Construction Site") {
+            cout << "You are on a bustling construction site. Heavy machinery, cranes, and bulldozers surround you.\n";
+        } else if (environmentType == "Mining Site") {
+            cout << "You are in a vast mining site. Excavators are digging deep into the earth, and trucks are hauling material.\n";
+        } else if (environmentType == "Forest Area") {
+            cout << "You are in a dense forest area. Excavators and bulldozers are clearing paths through trees.\n";
+        }
+        this_thread::sleep_for(chrono::seconds(2)); // Simulate some delay for VR effect
+    }
+};
+
+// Control Panel Class
+class ControlPanel {
+private:
+    SimulationEnvironment* simulation;
+
+public:
+    ControlPanel(SimulationEnvironment* sim) : simulation(sim) {}
+
+    void displayMenu() {
+        cout << "\n--- Control Panel ---\n";
+        cout << "1. Move Vehicle\n";
+        cout << "2. Perform Task\n";
+        cout << "3. Transport Material\n";
+        cout << "4. Set Speed\n";
+        cout << "5. Refuel\n";
+        cout << "6. End Simulation\n";
+        cout << "Enter your choice: ";
+    }
+
+    void start() {
+        int choice;
+        simulation->displayEnvironmentVR();  // Show VR for environment on start
+        while (true) {
+            displayMenu();
+            cin >> choice;
+
+            switch (choice) {
+            case 1: {
+                string direction;
+                cout << "Enter direction (forward/backward/left/right): ";
+                cin >> direction;
+                simulation->getVehicle()->move(direction);
+                simulation->addFuelUsage(5);
+                simulation->updateScore(5);
+                break;
+            }
+            case 2:
+                simulation->getVehicle()->performTask();
+                simulation->incrementTasks();
+                simulation->addFuelUsage(simulation->getVehicle()->getFuelConsumptionRate());
+                simulation->updateScore(10);
+                break;
+            case 3: {
+                int weight;
+                cout << "Enter weight of material to transport (in tons): ";
+                cin >> weight;
+
+                // Get initial fuel level before attempting to transport
+                int initialFuel = simulation->getVehicle()->getFuelLevel();
+
+                // Attempt transport
+                simulation->getVehicle()->transportMaterial(weight);
+
+                // Check if fuel was actually used
+                int fuelUsed = initialFuel - simulation->getVehicle()->getFuelLevel();
+                if (fuelUsed > 0) {
+                    simulation->addFuelUsage(fuelUsed);
+                    simulation->updateScore(7);
+                }
+                break;
+            }
+            case 4: {
+                int speed;
+                cout << "Enter new speed (km/h): ";
+                cin >> speed;
+                simulation->getVehicle()->setSpeed(speed);
+                break;
+            }
+            case 5:
+                simulation->getVehicle()->refuel();
+                break;
+            case 6:
+                simulation->provideFeedback();
+                return;
+            default:
+                cout << "Invalid choice. Please try again.\n";
+            }
+        }
+    }
+};
+
+// Main Function
+int main() {
+    Bulldozer bulldozer("Bulldozer-1");
+    Excavator excavator("Excavator-1");
+
+    cout << "Welcome to the Heavy Equipment Simulator.\n";
+    cout << "Choose a vehicle to simulate:\n";
+    cout << "1. Bulldozer\n";
+    cout << "2. Excavator\n";
+    cout << "Enter your choice: ";
+    int vehicleChoice;
+    cin >> vehicleChoice;
+
+    Vehicle* selectedVehicle;
+    if (vehicleChoice == 1) {
+        selectedVehicle = &bulldozer;
+    } else if (vehicleChoice == 2) {
+        selectedVehicle = &excavator;
+    } else {
+        cout << "Invalid choice. Exiting simulation.\n";
+        return 0;
+    }
+
+    cout << "\nChoose an operating environment:\n";
+    cout << "1. Construction Site\n";
+    cout << "2. Mining Site\n";
+    cout << "3. Forest Area\n";
+    cout << "Enter your choice: ";
+    int environmentChoice;
+    cin >> environmentChoice;
+
+    string environmentType;
+    if (environmentChoice == 1) {
+        environmentType = "Construction Site";
+    } else if (environmentChoice == 2) {
+        environmentType = "Mining Site";
+    } else if (environmentChoice == 3) {
+        environmentType = "Forest Area";
+    } else {
+        cout << "Invalid choice. Exiting simulation.\n";
+        return 0;
+    }
+
+    SimulationEnvironment sim(selectedVehicle, environmentType);
+    ControlPanel controlPanel(&sim);
+
+    controlPanel.start();
+
+    return 0;
+}
